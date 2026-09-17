@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+
+{% block title %}Search Results - Question Paper Management System{% endblock %}
+
+{% block content %}
+<div class="max-w-container-max mx-auto px-gutter py-8">
+    <div class="mb-8">
+        <h2 class="font-display-lg text-headline-xl text-primary mb-2">Search Results for "{{ query }}"</h2>
+        <p class="font-body-md text-on-surface-variant">Found {{ results|length }} result(s)</p>
+    </div>
+
+    {% if results %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for paper in results %}
+        <div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-6 flex flex-col h-full shadow-sm hover:border-secondary transition-colors">
+            <div class="flex-grow">
+                <div class="flex items-start justify-between mb-2">
+                    <h5 class="font-headline-md text-headline-md text-on-surface line-clamp-2">{{ paper.subject.name }}</h5>
+                </div>
+                <div class="text-label-md text-on-surface-variant mb-4 pb-4 border-b border-outline-variant">
+                    {{ paper.course.department.name }} &bull; {{ paper.semester.name }}
+                </div>
+                <div class="space-y-2 mb-6">
+                    <div class="flex justify-between">
+                        <span class="text-on-surface-variant font-medium">Academic Year:</span>
+                        <span class="text-on-surface">{{ paper.academic_year }}</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-on-surface-variant font-medium">Exam Type:</span>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-secondary-container text-on-secondary-container">
+                            {{ paper.exam_type }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <div class="flex justify-between items-center mt-auto pt-4 border-t border-outline-variant">
+                <a href="{% url 'papers:view_paper' paper.id %}" target="_blank" class="inline-flex items-center gap-1 px-4 py-2 text-primary font-label-md border border-outline-variant rounded hover:bg-surface-container-low transition-colors no-underline">
+                    <span class="material-symbols-outlined text-sm">visibility</span> View
+                </a>
+                <a href="{% url 'papers:download_paper' paper.id %}" class="inline-flex items-center gap-1 px-4 py-2 bg-primary text-on-primary font-label-md rounded hover:opacity-90 transition-opacity no-underline">
+                    <span class="material-symbols-outlined text-sm">download</span> Download
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="bg-surface-container-highest rounded-lg p-10 text-center max-w-2xl mx-auto">
+        <span class="material-symbols-outlined text-6xl text-outline mb-4">search_off</span>
+        <h3 class="font-headline-lg text-headline-lg text-on-surface mb-2">No results found</h3>
+        <p class="font-body-md text-on-surface-variant mb-6">We couldn't find any question papers matching "{{ query }}". Try using different keywords or browsing by department.</p>
+        <a href="{% url 'core:home' %}" class="inline-flex items-center gap-2 bg-primary text-on-primary px-6 py-2.5 rounded-full font-label-md hover:opacity-90 transition-opacity no-underline">
+            <span class="material-symbols-outlined">home</span>
+            Return to Home
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

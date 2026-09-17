@@ -1,0 +1,164 @@
+{% extends 'dashboard/base_dashboard.html' %}
+
+{% block title %}Overview{% endblock %}
+{% block page_title %}Overview{% endblock %}
+
+{% block content %}
+<!-- Statistics Cards -->
+<div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-4 mb-4">
+    <div class="col">
+        <div class="card dashboard-card h-100">
+            <div class="card-body stat-card">
+                <div class="stat-icon">
+                    <i class="bi bi-building"></i>
+                </div>
+                <div class="stat-details">
+                    <h3>{{ total_departments }}</h3>
+                    <p>Departments</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col">
+        <div class="card dashboard-card h-100">
+            <div class="card-body stat-card">
+                <div class="stat-icon bg-success bg-opacity-10 text-success">
+                    <i class="bi bi-journal-album"></i>
+                </div>
+                <div class="stat-details">
+                    <h3>{{ total_semesters }}</h3>
+                    <p>Semesters</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col">
+        <div class="card dashboard-card h-100">
+            <div class="card-body stat-card">
+                <div class="stat-icon bg-info bg-opacity-10 text-info">
+                    <i class="bi bi-book"></i>
+                </div>
+                <div class="stat-details">
+                    <h3>{{ total_subjects }}</h3>
+                    <p>Subjects</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col">
+        <div class="card dashboard-card h-100">
+            <div class="card-body stat-card">
+                <div class="stat-icon bg-warning bg-opacity-10 text-warning">
+                    <i class="bi bi-file-earmark-pdf"></i>
+                </div>
+                <div class="stat-details">
+                    <h3>{{ total_papers }}</h3>
+                    <p>Question Papers</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card dashboard-card h-100">
+            <div class="card-body stat-card">
+                <div class="stat-icon bg-info bg-opacity-10 text-info">
+                    <i class="bi bi-cpu"></i>
+                </div>
+                <div class="stat-details">
+                    <h3>{{ total_extracted }}</h3>
+                    <p>Processed Papers</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="mb-4">
+    <h5 class="mb-3 text-secondary">Quick Actions</h5>
+    <div class="d-flex flex-wrap gap-2">
+        <a href="{% url 'dashboard:department_create' %}" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i> Add Department</a>
+        <a href="{% url 'dashboard:semester_create' %}" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i> Add Semester</a>
+        <a href="{% url 'dashboard:subject_create' %}" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i> Add Subject</a>
+        <a href="{% url 'dashboard:paper_create' %}" class="btn btn-success"><i class="bi bi-upload me-1"></i> Upload Question Paper</a>
+    </div>
+</div>
+
+
+<!-- Tables Section -->
+<div class="row">
+    <div class="col-lg-7 mb-4">
+        <div class="card dashboard-card h-100">
+            <div class="card-header bg-white border-bottom pt-3 pb-2 d-flex justify-content-between align-items-center">
+                <h5 class="m-0 text-secondary">Recent Uploads</h5>
+                <a href="{% url 'dashboard:papers' %}" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle m-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-3">Subject</th>
+                                <th>Year</th>
+                                <th>Type</th>
+                                <th>Date</th>
+                                <th class="text-end pe-3">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for paper in recent_papers %}
+                            <tr>
+                                <td class="ps-3 fw-medium">{{ paper.subject.name }}</td>
+                                <td>{{ paper.academic_year }}</td>
+                                <td><span class="badge bg-secondary">{{ paper.exam_type }}</span></td>
+                                <td class="text-muted small">{{ paper.upload_date|date:"M d, Y" }}</td>
+                                <td class="text-end pe-3">
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{% url 'papers:view_paper' paper.id %}" target="_blank" class="btn btn-light border" title="View"><i class="bi bi-eye text-primary"></i></a>
+                                        <a href="{% url 'dashboard:paper_update' paper.id %}" class="btn btn-light border" title="Edit"><i class="bi bi-pencil text-primary"></i></a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center py-4 text-muted">No recent uploads found.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-5 mb-4">
+        <div class="card dashboard-card h-100">
+            <div class="card-body">
+                <h5 class="card-title text-secondary mb-4">AI / Extraction Status</h5>
+                
+                <div class="d-flex align-items-center justify-content-center mb-4 text-center">
+                    <div>
+                        <h2 class="display-4 fw-bold text-success mb-0">{{ total_extracted }}</h2>
+                        <span class="text-muted small text-uppercase fw-semibold">Completed Papers</span>
+                    </div>
+                </div>
+
+                <div class="row text-center mt-2 border-top pt-4">
+                    <div class="col-6 border-end">
+                        <div class="fs-4 fw-bold text-primary">{{ total_papers }}</div>
+                        <div class="small text-muted text-uppercase">Total Papers</div>
+                    </div>
+                    <div class="col-6">
+                        <div class="fs-4 fw-bold text-danger">{{ total_failed }}</div>
+                        <div class="small text-muted text-uppercase">Failed</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

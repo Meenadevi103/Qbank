@@ -1,0 +1,155 @@
+<div
+    class="mt-12 mb-8 bg-surface-container-lowest rounded-lg border border-outline-variant overflow-hidden shadow-sm p-6">
+    <div class="flex items-center justify-between mb-8 border-b border-outline-variant pb-4">
+        <div class="flex items-center gap-3">
+            <span class="material-symbols-outlined text-primary text-3xl">psychology</span>
+            <div>
+                <h3 class="font-display-md text-display-md text-on-surface m-0">Semantic AI Analysis</h3>
+                <p class="text-on-surface-variant text-sm mt-1">
+                    Analyzed {{ data.total_questions }} questions from {{ data.total_papers }} papers.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    {% if data.groups %}
+    <div class="space-y-10">
+
+        <!-- Summary Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-primary-container text-on-primary-container p-5 rounded-lg border border-outline-variant">
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="material-symbols-outlined">stars</span>
+                    <div class="text-sm font-bold uppercase tracking-wider">Most Important Topic</div>
+                </div>
+                <div class="text-xl font-medium">{{ data.groups.0.topic }}</div>
+                <div class="text-sm mt-2 opacity-90">{{ data.groups.0.frequency }} appearances across papers</div>
+            </div>
+            <div
+                class="bg-secondary-container text-on-secondary-container p-5 rounded-lg border border-outline-variant">
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="material-symbols-outlined">library_books</span>
+                    <div class="text-sm font-bold uppercase tracking-wider">Analysis Scope</div>
+                </div>
+                <div class="text-xl font-medium">{{ data.groups|length }} unique concepts</div>
+                <div class="text-sm mt-2 opacity-90">Spanning academic years: {{ data.all_years|join:", " }}</div>
+            </div>
+        </div>
+
+        <!-- Topic Frequency Chart (CSS Based) -->
+        <div>
+            <h4 class="font-headline-md text-headline-md text-on-surface mb-4">Topic Frequency Chart</h4>
+            <div class="bg-surface border border-outline-variant rounded-md p-6">
+                <div class="space-y-4">
+                    {% for group in data.groups|slice:":10" %}
+                    {% widthratio group.frequency data.groups.0.frequency 100 as bar_width %}
+                    <div>
+                        <div class="flex justify-between text-sm mb-1">
+                            <span class="font-medium text-on-surface truncate pr-4" style="max-width: 80%;">{{ group.topic }}</span>
+                            <span class="text-on-surface-variant font-bold">{{ group.frequency }}</span>
+                        </div>
+                        <div class="w-full bg-surface-container-high rounded-full h-2.5">
+                            <div class="bg-primary h-2.5 rounded-full" style="width: {{ bar_width }}%"></div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    {% if data.groups|length > 10 %}
+                    <div class="text-center text-sm text-on-surface-variant mt-4 pt-2 border-t border-outline-variant">
+                        Showing top 10 most frequent topics.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Year-wise Pattern -->
+        <div>
+            <h4 class="font-headline-md text-headline-md text-on-surface mb-4">Year-wise Pattern (Top Topics)</h4>
+            <div class="overflow-x-auto bg-surface border border-outline-variant rounded-md shadow-sm">
+                <table class="w-full text-left border-collapse text-sm">
+                    <thead class="bg-surface-container-low border-b border-outline-variant">
+                        <tr>
+                            <th scope="col" class="px-4 py-3 font-medium text-on-surface">Topic</th>
+                            {% for year in data.all_years %}
+                            <th scope="col" class="px-4 py-3 font-medium text-on-surface text-center">{{ year }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-outline-variant">
+                        {% for group in data.groups|slice:":10" %}
+                        <tr class="hover:bg-surface-container-lowest">
+                            <td class="px-4 py-3 font-medium text-on-surface">{{ group.topic }}</td>
+                            {% for year in data.all_years %}
+                            <td class="px-4 py-3 text-center text-on-surface-variant">
+                                {% if year in group.years %}
+                                <span class="material-symbols-outlined text-primary text-lg">check_circle</span>
+                                {% else %}
+                                -
+                                {% endif %}
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Group Details -->
+        <div>
+            <h4 class="font-headline-md text-headline-md text-on-surface mb-4">Repeated & Similar Questions</h4>
+
+            <div class="space-y-6">
+                {% for group in data.groups %}
+                <div class="bg-surface border border-outline-variant rounded-md p-5 shadow-sm">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <div class="flex items-center gap-3 mb-1">
+                                <h5 class="text-lg font-medium text-on-surface">
+                                    Topic: {{ group.topic }}
+                                </h5>
+                                {% if group.priority == "High Priority" %}
+                                <span
+                                    class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-error-container text-on-error-container">
+                                    HIGH PRIORITY
+                                </span>
+                                {% elif group.priority == "Important" %}
+                                <span
+                                    class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-tertiary-container text-on-tertiary-container">
+                                    IMPORTANT
+                                </span>
+                                {% else %}
+                                <span
+                                    class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-surface-variant text-on-surface-variant">
+                                    OPTIONAL
+                                </span>
+                                {% endif %}
+                            </div>
+                            <div class="text-sm text-on-surface-variant mt-1">
+                                Appeared <strong>{{ group.frequency }} times</strong> across years: {{ group.years|join:", " }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div
+                        class="bg-surface-container-lowest p-4 rounded text-sm text-on-surface-variant border border-outline-variant mt-3">
+                        <div class="font-semibold mb-2 text-on-surface">Related Extracted Questions:</div>
+                        <ul class="list-disc pl-5 space-y-1.5">
+                            {% for q in group.related_questions %}
+                            <li>{{ q }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+    </div>
+    {% else %}
+    <div class="text-center py-10">
+        <span class="material-symbols-outlined text-4xl text-on-surface-variant opacity-50 mb-3">analytics</span>
+        <p class="text-on-surface-variant">No questions found to analyze. Extract questions from PDFs first.</p>
+    </div>
+    {% endif %}
+</div>

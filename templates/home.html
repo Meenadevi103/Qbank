@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-pattern relative overflow-hidden py-section-gap">
+    <div class="max-w-container-max mx-auto px-gutter text-center relative z-10">
+        <h1 class="font-display-lg text-display-lg text-primary mb-base">Find Previous Year Question Papers</h1>
+        <p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl mx-auto mb-10">Search across all departments, semesters, and subjects instantly. Access our comprehensive academic archive.</p>
+        
+        <form action="{% url 'core:search' %}" method="GET">
+            <div class="max-w-3xl mx-auto relative group">
+                <input name="q" class="w-full h-16 pl-14 pr-6 bg-surface-container-lowest border border-outline-variant rounded-full soft-shadow focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none text-body-lg" placeholder="Search for subjects, departments, or question papers..." type="text" required>
+                <span class="material-symbols-outlined absolute left-5 top-1/2 -translate-y-1/2 text-primary text-2xl group-focus-within:scale-110 transition-transform">search</span>
+                <button type="submit" class="absolute right-3 top-1/2 -translate-y-1/2 bg-primary text-on-primary px-6 py-2.5 rounded-full font-label-md hover:opacity-90 transition-opacity">Search Now</button>
+            </div>
+        </form>
+
+        <div class="mt-8 flex justify-center gap-8">
+            <div class="flex items-center gap-2 text-on-surface-variant">
+                <span class="material-symbols-outlined text-secondary" style="font-variation-settings: 'FILL' 1;">verified</span>
+                <span class="text-label-md">Verified Papers</span>
+            </div>
+            <div class="flex items-center gap-2 text-on-surface-variant">
+                <span class="material-symbols-outlined text-secondary" style="font-variation-settings: 'FILL' 1;">download</span>
+                <span class="text-label-md">Direct PDF Access</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Department Grid -->
+<section class="py-section-gap bg-surface">
+    <div class="max-w-container-max mx-auto px-gutter">
+        <div class="flex flex-col items-center mb-12">
+            <h2 class="font-headline-xl text-headline-xl text-on-background mb-2">Browse by Department</h2>
+            <div class="w-20 h-1 bg-secondary rounded-full"></div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {% for dept in departments %}
+            <a href="{% url 'departments:department_detail' dept.id %}" class="dept-card group bg-surface-container-lowest p-8 border border-outline-variant rounded-lg transition-all duration-300 flex flex-col items-center text-center hover:border-secondary no-underline">
+                <div class="w-16 h-16 bg-surface-container-low rounded-full flex items-center justify-center mb-6 text-primary-container group-hover:bg-secondary-container group-hover:text-on-secondary-container transition-colors">
+                    <span class="material-symbols-outlined text-4xl">
+                        {% if 'Computer' in dept.name %}computer
+                        {% elif 'Commerce' in dept.name %}payments
+                        {% elif 'Math' in dept.name %}calculate
+                        {% elif 'Physics' in dept.name %}precision_manufacturing
+                        {% elif 'English' in dept.name %}menu_book
+                        {% elif 'Chemistry' in dept.name %}science
+                        {% elif 'Management' in dept.name %}corporate_fare
+                        {% elif 'Social' in dept.name %}groups
+                        {% elif 'Psychology' in dept.name %}psychology
+                        {% elif 'Library' in dept.name %}local_library
+                        {% elif 'Information' in dept.name %}devices
+                        {% else %}domain
+                        {% endif %}
+                    </span>
+                </div>
+                <h3 class="font-headline-md text-headline-md text-on-surface mb-2">{{ dept.name }}</h3>
+                <div class="mt-6 flex items-center text-primary font-label-md group-hover:text-secondary transition-colors cursor-pointer">
+                    View Papers <span class="material-symbols-outlined ml-1">chevron_right</span>
+                </div>
+            </a>
+            {% empty %}
+            <div class="col-span-full text-center py-10">
+                <p class="text-on-surface-variant text-lg">No departments available at the moment.</p>
+            </div>
+            {% endfor %}
+            
+            {% if departments %}
+            <!-- Explore More Card -->
+            <a href="{% url 'departments:department_list' %}" class="dept-card group bg-surface-container-lowest p-8 border border-outline-variant rounded-lg transition-all duration-300 flex flex-col items-center text-center hover:border-secondary no-underline">
+                <div class="w-16 h-16 bg-surface-container-low rounded-full flex items-center justify-center mb-6 text-primary-container group-hover:bg-secondary-container group-hover:text-on-secondary-container transition-colors">
+                    <span class="material-symbols-outlined text-4xl">local_library</span>
+                </div>
+                <h3 class="font-headline-md text-headline-md text-on-surface mb-2">Explore More</h3>
+                <div class="mt-6 flex items-center text-primary font-label-md group-hover:text-secondary transition-colors cursor-pointer">
+                    View All Departments <span class="material-symbols-outlined ml-1">chevron_right</span>
+                </div>
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Search interaction
+    const searchInput = document.querySelector('input[type="text"]');
+    if(searchInput) {
+        searchInput.addEventListener('focus', () => {
+            searchInput.parentElement.classList.add('ring-2', 'ring-primary');
+        });
+        searchInput.addEventListener('blur', () => {
+            searchInput.parentElement.classList.remove('ring-2', 'ring-primary');
+        });
+    }
+</script>
+{% endblock %}

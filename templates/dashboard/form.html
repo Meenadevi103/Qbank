@@ -1,0 +1,114 @@
+{% extends 'dashboard/base_dashboard.html' %}
+
+{% block title %}{{ action }} {{ entity_name }}{% endblock %}
+{% block page_title %}{{ action }} {{ entity_name }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6">
+        <div class="card dashboard-card">
+            <div class="card-header bg-white border-bottom pt-4 pb-3">
+                <h5 class="m-0 text-primary"><i class="bi bi-pencil-square me-2"></i>{{ action }} {{ entity_name }}</h5>
+            </div>
+            
+            <div class="card-body p-4">
+                <form method="POST" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {{ form.non_field_errors }}
+                        </div>
+                    {% endif %}
+                    
+                    {% for field in form %}
+                        <div class="mb-4">
+                            <label for="{{ field.id_for_label }}" class="form-label fw-medium">{{ field.label }} {% if field.field.required %}<span class="text-danger">*</span>{% endif %}</label>
+                            {{ field }}
+                            {% if field.help_text %}
+                                <div class="form-text text-muted">{{ field.help_text }}</div>
+                            {% endif %}
+                            {% if field.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ field.errors|join:", " }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                    
+                    <div class="d-flex justify-content-end gap-2 mt-5 border-top pt-4">
+                        <a href="{{ cancel_url }}" class="btn btn-light border px-4">Cancel</a>
+                        <button type="submit" class="btn btn-primary px-4"><i class="bi bi-check2 me-1"></i> Save {{ entity_name }}</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const deptSelect = document.getElementById('id_department');
+    const courseSelect = document.getElementById('id_course');
+    const semSelect = document.getElementById('id_semester');
+    const subSelect = document.getElementById('id_subject');
+    
+    function fetchOptions(url, targetSelect, placeholder) {
+        if (!targetSelect) return;
+        targetSelect.innerHTML = `<option value="">---------</option>`;
+        targetSelect.disabled = true;
+        
+        fetch(url)
+            .then(res => res.json())
+            .then(data => {
+                data.forEach(item => {
+                    const opt = document.createElement('option');
+                    opt.value = item.id;
+                    opt.textContent = item.name;
+                    targetSelect.appendChild(opt);
+                });
+                targetSelect.disabled = false;
+            })
+            .catch(err => console.error(err));
+    }
+
+    if (deptSelect && courseSelect) {
+        deptSelect.addEventListener('change', function() {
+            const deptId = this.value;
+            if (deptId) {
+                fetchOptions(`/dashboard/ajax/get-courses/?department_id=${deptId}`, courseSelect);
+                if(semSelect) semSelect.innerHTML = `<option value="">---------</option>`;
+                if(subSelect) subSelect.innerHTML = `<option value="">---------</option>`;
+            } else {
+                courseSelect.innerHTML = `<option value="">---------</option>`;
+            }
+        });
+    }
+
+    if (courseSelect && semSelect) {
+        courseSelect.addEventListener('change', function() {
+            const courseId = this.value;
+            if (courseId) {
+                fetchOptions(`/dashboard/ajax/get-semesters/?course_id=${courseId}`, semSelect);
+                if(subSelect) subSelect.innerHTML = `<option value="">---------</option>`;
+            } else {
+                semSelect.innerHTML = `<option value="">---------</option>`;
+            }
+        });
+    }
+
+    if (semSelect && subSelect) {
+        semSelect.addEventListener('change', function() {
+            const semId = this.value;
+            if (semId) {
+                fetchOptions(`/dashboard/ajax/get-subjects/?semester_id=${semId}`, subSelect);
+            } else {
+                subSelect.innerHTML = `<option value="">---------</option>`;
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,8 @@
+from django.contrib import admin
+from .models import Subject
+
+@admin.register(Subject)
+class SubjectAdmin(admin.ModelAdmin):
+    list_display = ('name', 'code', 'course', 'semester')
+    list_filter = ('course', 'semester')
+    search_fields = ('name', 'code')

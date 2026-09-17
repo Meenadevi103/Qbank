@@ -1,0 +1,16 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+<div id="content-main">
+    <h1>Extracted Text for {{ paper.subject.name }} - {{ paper.academic_year }}</h1>
+    
+    <div style="margin-bottom: 20px;">
+        <a href="{% url 'admin:papers_questionpaper_change' paper.id %}" class="button">Back to Question Paper</a>
+        <a href="{% url 'admin:papers_questionpaper_reprocess_paper' paper.id %}" class="button" style="background: #ba2121; color: white;">Reprocess OCR / Text</a>
+    </div>
+
+    <div style="background: #fff; padding: 20px; border: 1px solid #ccc; white-space: pre-wrap; font-family: monospace;">
+        {{ extracted_text|default:"No text could be extracted or text was empty." }}
+    </div>
+</div>
+{% endblock %}

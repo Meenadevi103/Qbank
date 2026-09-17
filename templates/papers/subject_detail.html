@@ -1,0 +1,130 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ subject.name }} - Question Papers{% endblock %}
+
+{% block content %}
+<div class="max-w-container-max mx-auto px-gutter py-8">
+    <nav aria-label="breadcrumb" class="mb-8">
+        <ol class="flex text-label-md text-on-surface-variant flex-wrap items-center">
+            <li><a href="{% url 'core:home' %}" class="hover:text-primary transition-colors no-underline">Home</a></li>
+            <li class="mx-2">/</li>
+            <li><a href="{% url 'departments:department_list' %}" class="hover:text-primary transition-colors no-underline">Departments</a></li>
+            <li class="mx-2">/</li>
+            <li><a href="{% url 'departments:department_detail' department.id %}" class="hover:text-primary transition-colors no-underline">{{ department.name }}</a></li>
+            <li class="mx-2">/</li>
+            <li><a href="{% url 'departments:course_detail' course.id %}" class="hover:text-primary transition-colors no-underline">{{ course.name }}</a></li>
+            <li class="mx-2">/</li>
+            <li><a href="{% url 'subjects:semester_detail' semester.id %}" class="hover:text-primary transition-colors no-underline">{{ semester.name }}</a></li>
+            <li class="mx-2">/</li>
+            <li class="text-primary font-medium" aria-current="page">{{ subject.name }}</li>
+        </ol>
+    </nav>
+
+    <div class="mb-12 text-center">
+        <h2 class="font-display-lg text-display-lg text-primary mb-2">{{ subject.name }}</h2>
+        {% if subject.code %}
+            <p class="font-body-lg text-body-lg text-on-surface-variant mb-6">{{ subject.code }}</p>
+        {% endif %}
+        
+        <button id="btn-ai-analysis" data-subject-id="{{ subject.id }}" class="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-primary text-on-primary font-medium hover:opacity-90 transition-opacity shadow-sm">
+            <span class="material-symbols-outlined text-xl">psychology</span>
+            AI Analysis
+        </button>
+    </div>
+
+    <div class="bg-surface-container-lowest rounded-lg border border-outline-variant overflow-hidden shadow-sm">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead class="bg-surface-container-low border-b border-outline-variant">
+                    <tr>
+                        <th scope="col" class="px-6 py-4 font-headline-md text-label-md text-on-surface">Academic Year</th>
+                        <th scope="col" class="px-6 py-4 font-headline-md text-label-md text-on-surface">Exam Type</th>
+                        <th scope="col" class="px-6 py-4 font-headline-md text-label-md text-on-surface">Upload Date</th>
+                        <th scope="col" class="px-6 py-4 font-headline-md text-label-md text-on-surface text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-outline-variant">
+                    {% for paper in papers %}
+                    <tr class="hover:bg-surface-container-lowest transition-colors">
+                        <td class="px-6 py-4 font-medium text-on-surface">{{ paper.academic_year }}</td>
+                        <td class="px-6 py-4">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary-container text-on-secondary-container">
+                                {{ paper.exam_type }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-on-surface-variant text-sm">{{ paper.upload_date|date:"M d, Y" }}</td>
+                        <td class="px-6 py-4 text-right">
+                            <div class="flex justify-end gap-2">
+                                <a href="{% url 'papers:view_paper' paper.id %}" target="_blank" class="inline-flex items-center justify-center w-10 h-10 rounded-full border border-outline-variant text-primary hover:bg-primary-container hover:text-on-primary-container transition-colors" title="View">
+                                    <span class="material-symbols-outlined text-xl">visibility</span>
+                                </a>
+                                <a href="{% url 'papers:download_paper' paper.id %}" class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-primary text-on-primary hover:opacity-90 transition-opacity" title="Download">
+                                    <span class="material-symbols-outlined text-xl">download</span>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="px-6 py-12 text-center text-on-surface-variant">
+                            <span class="material-symbols-outlined text-4xl block mb-2 opacity-50">folder_off</span>
+                            No question papers uploaded for this subject yet.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- AI Analysis Container -->
+    <div id="ai-analysis-container"></div>
+
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const btn = document.getElementById('btn-ai-analysis');
+    const container = document.getElementById('ai-analysis-container');
+    
+    if (btn) {
+        btn.addEventListener('click', function() {
+            const subjectId = this.getAttribute('data-subject-id');
+            
+            // Show loading state
+            container.innerHTML = `
+                <div class="mt-12 text-center py-10 bg-surface-container-lowest rounded-lg border border-outline-variant shadow-sm">
+                    <span class="material-symbols-outlined text-4xl text-primary animate-spin mb-3">sync</span>
+                    <p class="text-on-surface-variant font-medium">Preparing question papers for analysis...</p>
+                    <p class="text-on-surface-variant text-sm mt-1">This uses local OCR and semantic models, and might take a few moments for un-analyzed papers.</p>
+                </div>
+            `;
+            
+            // Scroll to it smoothly
+            container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            
+            // Fetch analysis via AJAX
+            fetch(`/ai_analysis/analyze/${subjectId}/`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.text();
+                })
+                .then(html => {
+                    container.innerHTML = html;
+                })
+                .catch(error => {
+                    container.innerHTML = `
+                        <div class="mt-12 text-center py-10 bg-error-container text-on-error-container rounded-lg border border-error">
+                            <span class="material-symbols-outlined text-4xl mb-3">error</span>
+                            <p class="font-medium">Analysis Failed</p>
+                            <p class="text-sm mt-1">${error.message}</p>
+                        </div>
+                    `;
+                });
+        });
+    }
+});
+</script>
+{% endblock %}

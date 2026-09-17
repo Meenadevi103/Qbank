@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ department.name }} - Courses{% endblock %}
+
+{% block content %}
+<div class="max-w-container-max mx-auto px-gutter py-8">
+    <nav aria-label="breadcrumb" class="mb-8">
+        <ol class="flex text-label-md text-on-surface-variant flex-wrap">
+            <li><a href="{% url 'core:home' %}" class="hover:text-primary transition-colors no-underline">Home</a></li>
+            <li class="mx-2">/</li>
+            <li><a href="{% url 'departments:department_list' %}" class="hover:text-primary transition-colors no-underline">Departments</a></li>
+            <li class="mx-2">/</li>
+            <li class="text-primary font-medium" aria-current="page">{{ department.name }}</li>
+        </ol>
+    </nav>
+
+    <div class="mb-12 text-center">
+        <h2 class="font-display-lg text-display-lg text-primary mb-4">{{ department.name }}</h2>
+        <p class="font-body-lg text-body-lg text-on-surface-variant">Select a course to view semesters.</p>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 justify-center">
+        {% for course in courses %}
+        <a href="{% url 'departments:course_detail' course.id %}" class="dept-card group bg-surface-container-lowest p-6 border border-outline-variant rounded-lg transition-all duration-300 flex flex-col items-center text-center hover:border-secondary no-underline">
+            <div class="w-14 h-14 bg-surface-container-low rounded-full flex items-center justify-center mb-4 text-primary-container group-hover:bg-secondary-container group-hover:text-on-secondary-container transition-colors">
+                <span class="material-symbols-outlined text-3xl">menu_book</span>
+            </div>
+            <h5 class="font-headline-md text-headline-md text-on-surface mb-2">{{ course.name }}</h5>
+            <div class="mt-4 flex items-center text-primary font-label-md group-hover:text-secondary transition-colors cursor-pointer">
+                View Semesters <span class="material-symbols-outlined ml-1 text-sm">chevron_right</span>
+            </div>
+        </a>
+        {% empty %}
+        <div class="col-span-full text-center py-10">
+            <p class="text-on-surface-variant text-lg">No courses available for this department yet.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

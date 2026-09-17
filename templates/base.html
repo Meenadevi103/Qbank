@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>{% block title %}Question Paper Management System{% endblock %}</title>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+<script id="tailwind-config">
+tailwind.config = {darkMode: "class", theme: {extend: {colors: {"on-primary-container": "#67d377", "inverse-primary": "#71dd7f", "on-primary-fixed": "#002107", "surface-tint": "#006e29", "inverse-on-surface": "#eef1f6", "inverse-surface": "#2d3135", "surface-variant": "#e0e3e8", primary: "#003f14", "on-secondary-container": "#59685e", "surface-bright": "#f7f9ff", "on-secondary-fixed-variant": "#3c4a41", "surface-container": "#ebeef3", "on-tertiary": "#ffffff", "tertiary-fixed": "#e1e3e4", "secondary-fixed-dim": "#bacabe", "on-tertiary-fixed": "#191c1d", error: "#ba1a1a", "on-surface-variant": "#424750", tertiary: "#343637", "surface-container-highest": "#e0e3e8", "secondary-container": "#d6e7da", "on-secondary": "#ffffff", "outline-variant": "#c2c7d1", "on-primary-fixed-variant": "#00531d", "surface-container-low": "#f1f4f9", "on-error-container": "#93000a", "on-error": "#ffffff", "secondary-fixed": "#d6e7da", "surface-container-high": "#e5e8ee", "on-tertiary-container": "#bcbebf", "tertiary-container": "#4a4d4e", "on-secondary-fixed": "#111e17", "primary-fixed": "#8dfa99", "primary-fixed-dim": "#71dd7f", "surface-container-lowest": "#ffffff", surface: "#f7f9ff", "on-primary": "#ffffff", "tertiary-fixed-dim": "#c5c7c8", "primary-container": "#005920", "surface-dim": "#d7dadf", "on-background": "#181c20", outline: "#727781", secondary: "#536258", background: "#f7f9ff", "on-tertiary-fixed-variant": "#454748", "on-surface": "#181c20", "error-container": "#ffdad6"}, borderRadius: {DEFAULT: "0.125rem", lg: "0.25rem", xl: "0.5rem", full: "0.75rem"}, spacing: {gutter: "24px", "section-gap": "64px", base: "8px", "margin-mobile": "16px", "container-max": "1280px"}, fontFamily: {"headline-xl": ["Inter"], "body-md": ["Inter"], "display-lg": ["Inter"], "headline-lg": ["Inter"], "headline-md": ["Inter"], "body-lg": ["Inter"], "headline-xl-mobile": ["Inter"], "label-md": ["Inter"], headline: ["Inter"], display: ["Inter"], body: ["Inter"], label: ["Inter"]}, fontSize: {"headline-xl": ["32px", {lineHeight: "40px", letterSpacing: "-0.01em", fontWeight: "700"}], "body-md": ["16px", {lineHeight: "24px", fontWeight: "400"}], "display-lg": ["48px", {lineHeight: "56px", letterSpacing: "-0.02em", fontWeight: "700"}], "headline-lg": ["24px", {lineHeight: "32px", fontWeight: "600"}], "headline-md": ["20px", {lineHeight: "28px", fontWeight: "600"}], "body-lg": ["18px", {lineHeight: "28px", fontWeight: "400"}], "headline-xl-mobile": ["28px", {lineHeight: "36px", fontWeight: "700"}], "label-md": ["14px", {lineHeight: "20px", letterSpacing: "0.05em", fontWeight: "500"}]}}}};
+</script>
+<style>
+    .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    .soft-shadow {
+        box-shadow: 0 16px 16px -4px rgba(0, 0, 0, 0.06);
+    }
+    .dept-card:hover {
+        box-shadow: 0 20px 24px -6px rgba(0, 0, 0, 0.08);
+        transform: translateY(-2px);
+    }
+    .hero-pattern {
+        background-color: #f7f9ff;
+        background-image: radial-gradient(#004e890a 1px, transparent 1px);
+        background-size: 24px 24px;
+    }
+</style>
+{% block extra_css %}{% endblock %}
+</head>
+<body class="bg-surface font-body-md text-on-surface antialiased min-h-screen flex flex-col">
+<!-- TopNavBar -->
+<header class="bg-surface dark:bg-surface-dim border-b border-outline-variant dark:border-outline sticky top-0 z-50 transition-all duration-300" id="main-nav">
+    <div class="flex justify-between items-center w-full px-gutter max-w-container-max mx-auto h-16">
+        <div class="flex items-center gap-base">
+            <a href="{% url 'core:home' %}" class="font-bold text-primary text-xl no-underline">QBank System</a>
+        </div>
+        <nav class="hidden md:flex items-center space-x-8">
+            <a class="font-label-md text-label-md text-primary dark:text-primary-fixed hover:text-primary hover:bg-surface-container-low pb-1 transition-all no-underline {% if request.resolver_match.url_name == 'home' %}border-b-2 border-primary dark:border-primary-fixed{% endif %}" href="{% url 'core:home' %}">Home</a>
+            <a class="font-label-md text-label-md text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed hover:bg-surface-container-low transition-colors no-underline {% if request.resolver_match.url_name != 'home' %}border-b-2 border-primary dark:border-primary-fixed text-primary{% endif %}" href="{% url 'departments:department_list' %}">Departments</a>
+        </nav>
+        <div class="flex items-center gap-4">
+        </div>
+    </div>
+</header>
+
+<main class="flex-grow">
+    {% if messages %}
+        <div class="max-w-container-max mx-auto px-gutter mt-4">
+        {% for message in messages %}
+            <div class="bg-surface-container-high border-l-4 {% if message.tags == 'error' %}border-error{% else %}border-primary{% endif %} p-4 rounded mb-4 shadow-sm" role="alert">
+                <p class="font-body-md text-on-surface">{{ message }}</p>
+            </div>
+        {% endfor %}
+        </div>
+    {% endif %}
+    
+    {% block content %}
+    {% endblock %}
+</main>
+
+<!-- Footer -->
+<footer class="bg-surface-container dark:bg-inverse-surface border-t border-outline-variant dark:border-outline mt-auto">
+    <div class="max-w-container-max mx-auto px-gutter py-8 text-center text-on-surface-variant">
+        &copy; {% now "Y" %} Question Paper Management System. All rights reserved.
+    </div>
+</footer>
+
+<script>
+    // Simple scroll effect for navbar
+    window.addEventListener('scroll', () => {
+        const nav = document.getElementById('main-nav');
+        if (window.scrollY > 20) {
+            nav.classList.add('soft-shadow');
+        } else {
+            nav.classList.remove('soft-shadow');
+        }
+    });
+</script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

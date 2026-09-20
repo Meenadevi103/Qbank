@@ -11,7 +11,7 @@ class ExtractionStatus(models.Model):
     )
     METHOD_CHOICES = (
         ('NATIVE', 'Native Text (PyMuPDF)'),
-        ('OCR', 'OCR (PaddleOCR)'),
+        ('OCR', 'OCR (Tesseract / PaddleOCR fallback)'),
         ('MIXED', 'Mixed (Native + OCR)'),
         ('UNKNOWN', 'Unknown'),
     )

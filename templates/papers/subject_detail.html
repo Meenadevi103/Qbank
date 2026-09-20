@@ -26,10 +26,12 @@
             <p class="font-body-lg text-body-lg text-on-surface-variant mb-6">{{ subject.code }}</p>
         {% endif %}
         
-        <button id="btn-ai-analysis" data-subject-id="{{ subject.id }}" class="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-primary text-on-primary font-medium hover:opacity-90 transition-opacity shadow-sm">
-            <span class="material-symbols-outlined text-xl">psychology</span>
-            AI Analysis
-        </button>
+        {% if has_processed_paper %}
+            <button id="btn-ai-analysis" data-subject-id="{{ subject.id }}" class="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-primary text-on-primary font-medium hover:opacity-90 transition-opacity shadow-sm">
+                <span class="material-symbols-outlined text-xl">psychology</span>
+                AI Analysis
+            </button>
+        {% endif %}
     </div>
 
     <div class="bg-surface-container-lowest rounded-lg border border-outline-variant overflow-hidden shadow-sm">
@@ -95,8 +97,7 @@ document.addEventListener('DOMContentLoaded', function() {
             container.innerHTML = `
                 <div class="mt-12 text-center py-10 bg-surface-container-lowest rounded-lg border border-outline-variant shadow-sm">
                     <span class="material-symbols-outlined text-4xl text-primary animate-spin mb-3">sync</span>
-                    <p class="text-on-surface-variant font-medium">Preparing question papers for analysis...</p>
-                    <p class="text-on-surface-variant text-sm mt-1">This uses local OCR and semantic models, and might take a few moments for un-analyzed papers.</p>
+                    <p class="text-on-surface-variant font-medium">Loading available analysis...</p>
                 </div>
             `;
             

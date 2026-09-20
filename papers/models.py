@@ -8,9 +8,7 @@ def paper_upload_path(instance, filename):
 
 class QuestionPaper(models.Model):
     EXAM_TYPE_CHOICES = (
-        ('Internal', 'Internal'),
-        ('Mid Semester', 'Mid Semester'),
-        ('End Semester', 'End Semester'),
+        ('Regular', 'Regular'),
         ('Supplementary', 'Supplementary'),
     )
     
@@ -19,7 +17,7 @@ class QuestionPaper(models.Model):
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE, related_name='papers')
     
     academic_year = models.CharField(max_length=20) # e.g., "2023-2024"
-    exam_type = models.CharField(max_length=50, choices=EXAM_TYPE_CHOICES, default='End Semester')
+    exam_type = models.CharField(max_length=50, choices=EXAM_TYPE_CHOICES, default='Regular')
     
     pdf_file = models.FileField(upload_to=paper_upload_path)
     upload_date = models.DateTimeField(auto_now_add=True)

@@ -5,13 +5,17 @@ from .models import QuestionPaper
 
 def subject_detail(request, pk):
     subject = get_object_or_404(Subject, pk=pk)
-    papers = subject.papers.all().order_by('-academic_year')
+    papers = subject.papers.select_related('extraction_status').order_by('-academic_year')
+    has_processed_paper = papers.filter(
+        extraction_status__status='COMPLETED'
+    ).exists()
     return render(request, 'papers/subject_detail.html', {
         'subject': subject,
         'semester': subject.semester,
         'course': subject.course,
         'department': subject.course.department,
-        'papers': papers
+        'papers': papers,
+        'has_processed_paper': has_processed_paper,
     })
 
 def view_paper(request, pk):

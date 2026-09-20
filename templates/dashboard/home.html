@@ -105,6 +105,7 @@
                                 <th>Year</th>
                                 <th>Type</th>
                                 <th>Date</th>
+                                <th style="min-width: 185px;">AI Progress</th>
                                 <th class="text-end pe-3">Actions</th>
                             </tr>
                         </thead>
@@ -115,6 +116,42 @@
                                 <td>{{ paper.academic_year }}</td>
                                 <td><span class="badge bg-secondary">{{ paper.exam_type }}</span></td>
                                 <td class="text-muted small">{{ paper.upload_date|date:"M d, Y" }}</td>
+                                <td>
+                                    {% if paper.extraction_status.status == 'PROCESSING' %}
+                                        {% if paper.extraction_status.total_pages %}
+                                            {% widthratio paper.extraction_status.pages_processed paper.extraction_status.total_pages 100 as progress %}
+                                        {% else %}
+                                            {% widthratio 0 1 100 as progress %}
+                                        {% endif %}
+                                        <div class="analysis-running">
+                                            <div class="progress" role="progressbar" aria-label="Extraction progress" aria-valuenow="{{ progress }}" aria-valuemin="0" aria-valuemax="100" style="height: 8px;">
+                                                <div class="progress-bar progress-bar-striped progress-bar-animated" style="width: {{ progress }}%;"></div>
+                                            </div>
+                                            <small class="text-primary">Running: {{ paper.extraction_status.pages_processed }}/{{ paper.extraction_status.total_pages }} pages</small>
+                                        </div>
+                                    {% elif paper.extraction_status.status == 'COMPLETED' %}
+                                        <div class="progress" role="progressbar" aria-label="Extraction completed" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="height: 8px;">
+                                            <div class="progress-bar bg-success" style="width: 100%;"></div>
+                                        </div>
+                                        {% if paper.subject.ai_analysis.is_stale %}
+                                            <small class="text-warning-emphasis">Extraction complete; analysis queued</small>
+                                        {% else %}
+                                            <small class="text-success">Completed</small>
+                                        {% endif %}
+                                    {% elif paper.extraction_status.status == 'FAILED' %}
+                                        <div class="progress" role="progressbar" aria-label="Extraction failed" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="height: 8px;">
+                                            <div class="progress-bar bg-danger" style="width: 100%;"></div>
+                                        </div>
+                                        <small class="text-danger">Failed</small>
+                                    {% else %}
+                                        <div class="analysis-running">
+                                            <div class="progress" role="progressbar" aria-label="Queued for extraction" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="height: 8px;">
+                                                <div class="progress-bar bg-secondary" style="width: 0%;"></div>
+                                            </div>
+                                            <small class="text-muted">Queued</small>
+                                        </div>
+                                    {% endif %}
+                                </td>
                                 <td class="text-end pe-3">
                                     <div class="btn-group btn-group-sm">
                                         <a href="{% url 'papers:view_paper' paper.id %}" target="_blank" class="btn btn-light border" title="View"><i class="bi bi-eye text-primary"></i></a>
@@ -124,7 +161,7 @@
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="5" class="text-center py-4 text-muted">No recent uploads found.</td>
+                                <td colspan="6" class="text-center py-4 text-muted">No recent uploads found.</td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -162,3 +199,10 @@
 </div>
 {% endblock %}
 
+{% block extra_js %}
+<script>
+    if (document.querySelector('.analysis-running')) {
+        window.setTimeout(() => window.location.reload(), 5000);
+    }
+</script>
+{% endblock %}

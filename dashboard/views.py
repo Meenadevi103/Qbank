@@ -23,7 +23,9 @@ def home(request):
         'total_papers': QuestionPaper.objects.count(),
         'total_extracted': total_extracted,
         'total_failed': total_failed,
-        'recent_papers': QuestionPaper.objects.order_by('-upload_date')[:5],
+        'recent_papers': QuestionPaper.objects.select_related(
+            'subject', 'extraction_status', 'subject__ai_analysis'
+        ).order_by('-upload_date')[:5],
     }
     return render(request, 'dashboard/home.html', context)
 
@@ -256,7 +258,9 @@ def subject_delete(request, pk):
 @staff_member_required(login_url='/admin-login/')
 def papers(request):
     q = request.GET.get('q', '')
-    paper_list = QuestionPaper.objects.all().select_related('subject', 'course', 'semester').order_by('-upload_date')
+    paper_list = QuestionPaper.objects.all().select_related(
+        'subject', 'course', 'semester', 'extraction_status', 'subject__ai_analysis'
+    ).order_by('-upload_date')
     if q:
         paper_list = paper_list.filter(Q(subject__name__icontains=q) | Q(academic_year__icontains=q))
         
@@ -273,7 +277,7 @@ def paper_create(request):
         form = QuestionPaperForm(request.POST, request.FILES)
         if form.is_valid():
             paper = form.save()
-            ExtractionStatus.objects.create(question_paper=paper, status='PENDING')
+            ExtractionStatus.objects.get_or_create(question_paper=paper, defaults={'status': 'PENDING'})
             messages.success(request, "Question Paper uploaded successfully.")
             return redirect('dashboard:papers')
     else:

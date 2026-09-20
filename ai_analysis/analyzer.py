@@ -126,10 +126,20 @@ def perform_semantic_analysis(subject_id):
     subject = Subject.objects.get(id=subject_id)
     
     # 1. Fetch all questions for this subject
-    questions = ExtractedQuestion.objects.filter(question_paper__subject=subject)
+    questions = ExtractedQuestion.objects.filter(
+        question_paper__subject=subject
+    ).select_related('question_paper')
     
     if not questions.exists():
-        return {"groups": [], "total_papers": 0, "total_questions": 0}
+        analysis_data = {"groups": [], "total_papers": 0, "total_questions": 0}
+        cache, _ = SubjectAnalysisCache.objects.get_or_create(subject=subject)
+        # The old report may refer to a paper that has since been deleted.
+        # Replace it with the current empty result rather than showing stale
+        # questions from a removed paper.
+        cache.results_json = analysis_data
+        cache.is_stale = False
+        cache.save(update_fields=['results_json', 'is_stale', 'last_computed'])
+        return analysis_data
         
     # Gather distinct papers for stats
     papers = set(q.question_paper for q in questions)
@@ -146,6 +156,24 @@ def perform_semantic_analysis(subject_id):
             texts.append(cleaned_text)
             
     questions = valid_questions
+
+    # Some PDFs contain only instructions or parser fragments.  In that case
+    # there is nothing meaningful to embed; cache an empty valid result rather
+    # than passing an empty list to sentence-transformers.
+    if not questions:
+        analysis_data = {
+            "groups": [],
+            "total_papers": len(papers),
+            "total_questions": 0,
+            "all_years": sorted(
+                {str(p.academic_year) for p in papers}, reverse=True
+            ),
+        }
+        cache, _ = SubjectAnalysisCache.objects.get_or_create(subject=subject)
+        cache.results_json = analysis_data
+        cache.is_stale = False
+        cache.save(update_fields=['results_json', 'is_stale', 'last_computed'])
+        return analysis_data
     
     # 2. Generate Embeddings
     model = get_embedding_model()
@@ -244,14 +272,11 @@ def perform_semantic_analysis(subject_id):
     
     return analysis_data
 
-def get_or_compute_analysis(subject_id, force=False):
+def get_cached_analysis(subject_id):
     """
-    Retrieves cached analysis or computes it if missing/stale.
+    Retrieves cached analysis. Returns None if no analysis exists.
     """
     subject = Subject.objects.get(id=subject_id)
     cache, created = SubjectAnalysisCache.objects.get_or_create(subject=subject)
     
-    if created or cache.is_stale or force or not cache.results_json:
-        return perform_semantic_analysis(subject_id)
-        
     return cache.results_json

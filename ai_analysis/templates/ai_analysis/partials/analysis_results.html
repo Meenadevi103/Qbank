@@ -10,6 +10,13 @@
                 </p>
             </div>
         </div>
+        
+        <div>
+            <a href="{% url 'ai_analysis:download_report' subject_id %}" target="_blank" class="inline-flex items-center gap-2 px-4 py-2 rounded bg-primary text-on-primary font-medium hover:opacity-90 transition-opacity text-sm shadow-sm">
+                <span class="material-symbols-outlined text-lg">download</span>
+                Download Analysis Report
+            </a>
+        </div>
     </div>
 
     {% if update_in_progress %}
@@ -72,38 +79,7 @@
             </div>
         </div>
 
-        <!-- Year-wise Pattern -->
-        <div>
-            <h4 class="font-headline-md text-headline-md text-on-surface mb-4">Year-wise Pattern (Top Topics)</h4>
-            <div class="overflow-x-auto bg-surface border border-outline-variant rounded-md shadow-sm">
-                <table class="w-full text-left border-collapse text-sm">
-                    <thead class="bg-surface-container-low border-b border-outline-variant">
-                        <tr>
-                            <th scope="col" class="px-4 py-3 font-medium text-on-surface">Topic</th>
-                            {% for year in data.all_years %}
-                            <th scope="col" class="px-4 py-3 font-medium text-on-surface text-center">{{ year }}</th>
-                            {% endfor %}
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-outline-variant">
-                        {% for group in data.groups|slice:":10" %}
-                        <tr class="hover:bg-surface-container-lowest">
-                            <td class="px-4 py-3 font-medium text-on-surface">{{ group.topic }}</td>
-                            {% for year in data.all_years %}
-                            <td class="px-4 py-3 text-center text-on-surface-variant">
-                                {% if year in group.years %}
-                                <span class="material-symbols-outlined text-primary text-lg">check_circle</span>
-                                {% else %}
-                                -
-                                {% endif %}
-                            </td>
-                            {% endfor %}
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
+
 
         <!-- Group Details -->
         <div>
@@ -111,44 +87,78 @@
 
             <div class="space-y-6">
                 {% for group in data.groups %}
-                <div class="bg-surface border border-outline-variant rounded-md p-5 shadow-sm">
+                <div id="topic-{{ forloop.counter }}" class="bg-surface border border-outline-variant rounded-md p-5 shadow-sm">
                     <div class="flex justify-between items-start mb-4">
                         <div>
                             <div class="flex items-center gap-3 mb-1">
-                                <h5 class="text-lg font-medium text-on-surface">
-                                    Topic: {{ group.topic }}
-                                </h5>
-                                {% if group.priority == "High Priority" %}
-                                <span
-                                    class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-error-container text-on-error-container">
-                                    HIGH PRIORITY
-                                </span>
-                                {% elif group.priority == "Important" %}
-                                <span
-                                    class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-tertiary-container text-on-tertiary-container">
-                                    IMPORTANT
-                                </span>
-                                {% else %}
-                                <span
-                                    class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-surface-variant text-on-surface-variant">
-                                    OPTIONAL
-                                </span>
-                                {% endif %}
+                                <div class="flex items-center gap-3">
+                                    <h4 class="font-semibold text-lg text-on-surface m-0">{{ group.topic }}</h4>
+                                    <span class="px-2 py-0.5 rounded text-xs font-medium bg-primary-container text-on-primary-container">
+                                        Appeared in {{ group.distinct_papers }} distinct papers
+                                    </span>
+                                </div>
                             </div>
-                            <div class="text-sm text-on-surface-variant mt-1">
-                                Appeared <strong>{{ group.frequency }} times</strong> across years: {{ group.years|join:", " }}
+                            <div class="text-sm text-on-surface-variant mt-2 space-y-1">
+                                <div>Total occurrences: <strong>{{ group.frequency }}</strong></div>
+                                <div>Distinct papers: <strong>{{ group.distinct_papers }}</strong></div>
+                                <div>Distinct academic years: <strong>{{ group.distinct_years|default:group.years|length }}</strong></div>
+                                <div>Observed in years: {{ group.years|join:", " }}</div>
                             </div>
                         </div>
                     </div>
 
-                    <div
-                        class="bg-surface-container-lowest p-4 rounded text-sm text-on-surface-variant border border-outline-variant mt-3">
-                        <div class="font-semibold mb-2 text-on-surface">Related Extracted Questions:</div>
-                        <ul class="list-disc pl-5 space-y-1.5">
-                            {% for q in group.related_questions %}
-                            <li>{{ q }}</li>
-                            {% endfor %}
-                        </ul>
+                    <div class="bg-surface-container-lowest rounded overflow-x-auto text-sm border border-outline-variant mt-4">
+                        <table class="w-full text-left border-collapse">
+                            <thead class="bg-surface-container-low border-b border-outline-variant">
+                                <tr>
+                                    <th class="px-4 py-2 font-medium text-on-surface w-24">Year</th>
+                                    <th class="px-4 py-2 font-medium text-on-surface w-16">Section</th>
+                                    <th class="px-4 py-2 font-medium text-on-surface">Question</th>
+                                    <th class="px-4 py-2 font-medium text-on-surface w-32">Match Type</th>
+                                    <th class="px-4 py-2 font-medium text-on-surface text-right w-24">Marks</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-outline-variant">
+                                {% for q in group.related_questions %}
+                                <tr class="hover:bg-surface-container-lowest">
+                                    <td class="px-4 py-2 text-on-surface-variant whitespace-nowrap">
+                                        {{ q.academic_year }}
+                                        <div class="text-xs opacity-70">
+                                            Q{{ q.question_number }}{% if q.part %}({{ q.part }}){% endif %}
+                                        </div>
+                                    </td>
+                                    <td class="px-4 py-2 text-on-surface-variant text-center">
+                                        {% if q.section %} {{ q.section }} {% else %} - {% endif %}
+                                    </td>
+                                    <td class="px-4 py-2 text-on-surface">{{ q.text }}</td>
+                                    <td class="px-4 py-2">
+                                        {% if q.repetition_type == "Exact Repeat" %}
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-error-container text-on-error-container">
+                                            Exact Repeat
+                                        </span>
+                                        {% elif q.repetition_type == "Near Repeat" %}
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-tertiary-container text-on-tertiary-container">
+                                            Near Repeat
+                                        </span>
+                                        {% elif q.repetition_type == "Same Concept" %}
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-surface-variant text-on-surface-variant">
+                                            Same Concept
+                                        </span>
+                                        {% else %}
+                                        <span class="text-xs text-on-surface-variant opacity-70">Unique</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="px-4 py-2 text-right font-medium text-on-surface whitespace-nowrap">
+                                        {% if q.marks and q.marks != "Marks not available" %}
+                                            {{ q.marks }}
+                                        {% else %}
+                                            <span class="text-xs text-on-surface-variant opacity-70">Marks not available</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
                 {% endfor %}

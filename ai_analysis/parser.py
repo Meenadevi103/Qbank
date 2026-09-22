@@ -39,49 +39,106 @@ def is_question_start(line):
 
     return False, None, None
 
-def parse_questions_from_text(text, page_number=1):
+def parse_questions_from_text(text, page_number=1, context=None, is_last_page=True):
     """
     Takes a raw text block (from a page) and parses out questions.
-    Returns a list of dicts:
-    [{
-        'page_number': int,
-        'question_number': str,
-        'part': str or None,
-        'question_text': str,
-        'raw_text_block': str
-    }]
+    Returns a list of dicts and the parsing context:
+    ([questions], context)
     """
+    if context is None:
+        context = {
+            'current_section': None,
+            'section_mark': None,
+            'current_q_num': None,
+            'current_part': None,
+            'current_q_section': None,
+            'current_q_section_mark': None,
+            'current_text': []
+        }
+
+    # Preprocess text to ensure ORs and subquestions on the same line are split
+    text = re.sub(r'\s+\[?OR\]?\s+', '\nOR\n', text, flags=re.IGNORECASE)
+    text = re.sub(r'\s+(\(\s*[a-zA-Z]\s*\))\s+', r'\n\1 ', text)
+    
     questions = []
     lines = [line.strip() for line in text.split('\n') if line.strip()]
     
-    current_q_num = None
-    current_part = None
-    current_text = []
+    current_q_num = context['current_q_num']
+    current_part = context['current_part']
+    current_text = context['current_text']
+    
+    current_section = context['current_section']
+    section_mark = context['section_mark']
+    
+    current_q_section = context['current_q_section']
+    current_q_section_mark = context['current_q_section_mark']
     
     def save_current_question():
         if current_text and (current_q_num or current_part):
+            # Check if the last line is purely a number (likely right-aligned mark parsed as new line)
+            last_line_mark = None
+            if len(current_text) > 1 and re.match(r'^\(?\s*\d{1,2}\s*\)?$', current_text[-1].strip()):
+                last_line_mark = re.sub(r'[^\d]', '', current_text.pop().strip())
+
             q_text = " ".join(current_text).strip()
             
             # Clean up leading numbers/parts from the text itself to avoid duplication
-            # E.g., if text is "1. Explain...", remove "1. "
-            # This is optional, but helps keep the text clean.
             clean_q_text = re.sub(r'^(?:Q\.?\s*)?\d+[\.\)\:]?\s*(?:\(\s*[a-zA-Z]\s*\))?\s*', '', q_text, flags=re.IGNORECASE)
             clean_q_text = re.sub(r'^\(\s*[a-zA-Z]\s*\)\s*', '', clean_q_text, flags=re.IGNORECASE)
             clean_q_text = re.sub(r'^[a-zA-Z]\)\s*', '', clean_q_text, flags=re.IGNORECASE)
             
-            # Also clean up trailing marks like [10 marks]
-            clean_q_text = re.sub(r'\[\d+\s*marks?\]|\(\d+\)|\[\d+\s*[xX*]\s*\d+\s*=\s*\d+\]', '', clean_q_text, flags=re.IGNORECASE).strip()
+            # Extract marks using a more robust pattern
+            # Matches: [10], (10), 10 marks, [10 marks], (10M), etc.
+            marks_pattern = r'\[\s*(\d{1,2})\s*(?:marks?|m|M)?\s*\]|\(\s*(\d{1,2})\s*(?:marks?|m|M)?\s*\)|\b(\d{1,2})\s*(?:marks?|M)\b|\[\s*(\d+\s*[xX*]\s*\d+\s*=\s*\d+)\s*\]'
+            marks_match = re.search(marks_pattern, clean_q_text, flags=re.IGNORECASE)
+            
+            extracted_marks = None
+            if marks_match:
+                extracted_marks = next((m for m in marks_match.groups() if m is not None), None)
+            elif last_line_mark:
+                extracted_marks = last_line_mark
+            elif current_q_section_mark:
+                extracted_marks = current_q_section_mark
+            
+            # Clean up matched marks from the text
+            clean_q_text = re.sub(marks_pattern, '', clean_q_text, flags=re.IGNORECASE).strip()
             
             if len(clean_q_text) > 10:  # Minimum length for a valid question
                 questions.append({
                     'page_number': page_number,
                     'question_number': current_q_num or "Unknown",
                     'part': current_part,
+                    'section': current_q_section,
                     'question_text': clean_q_text,
-                    'raw_text_block': q_text
+                    'raw_text_block': q_text,
+                    'marks': extracted_marks
                 })
     
     for line in lines:
+        # 1. Check for section headers (e.g., "SECTION A", "PART - B", "Module 1")
+        sec_match = re.match(r'(?i)^(?:section|part|module)[\s\-]*([a-z0-9]+)', line)
+        is_sec_header = bool(sec_match)
+        if is_sec_header:
+            current_section = sec_match.group(1).upper()
+            
+        # 2. Check if it's an instructional line
+        is_instruction = bool(re.match(r'(?i)^(?:answer|attempt|note:?)\s+(?:all|any|the following)', line))
+            
+        # 3. Check for section marks in this line
+        # Only update section_mark if it's a header, instruction, or a short line
+        if is_sec_header or is_instruction or len(line) < 60:
+            sm_match = re.search(r'(?i)[a-z]{0,2}ach\s+(?:question\s+)?carries\s+(\d+)\s+marks?', line)
+            if not sm_match:
+                sm_match = re.search(r'(\d+)\s*[xX*]\s*(\d+)\s*=\s*\d+', line)
+                if sm_match:
+                    section_mark = sm_match.group(2)
+            else:
+                section_mark = sm_match.group(1)
+                
+        # 4. Skip further processing if it's a header or instruction
+        if is_sec_header or is_instruction:
+            continue
+            
         is_q, q_num, part = is_question_start(line)
         
         if is_q and q_num:
@@ -90,12 +147,15 @@ def parse_questions_from_text(text, page_number=1):
             current_q_num = q_num
             current_part = part
             current_text = [line]
-        elif is_q and part and not current_q_num:
-            # It's a subpart, but we have no main question context yet.
-            # Treat it as a new question (e.g. paper only has a, b, c)
+            current_q_section = current_section
+            current_q_section_mark = section_mark
+        elif is_q and part:
+            # It's a subpart.
             save_current_question()
             current_part = part
             current_text = [line]
+            current_q_section = current_section
+            current_q_section_mark = section_mark
         else:
             # Check if this line is an OR separator
             if re.match(r'^\[?OR\]?$', line, re.IGNORECASE):
@@ -105,7 +165,19 @@ def parse_questions_from_text(text, page_number=1):
             if current_q_num or current_part:
                 current_text.append(line)
                 
-    # Save the last question
-    save_current_question()
+    # Save the last question only if this is the last page
+    if is_last_page:
+        save_current_question()
+        current_text = []
     
-    return questions
+    context.update({
+        'current_section': current_section,
+        'section_mark': section_mark,
+        'current_q_num': current_q_num,
+        'current_part': current_part,
+        'current_q_section': current_q_section,
+        'current_q_section_mark': current_q_section_mark,
+        'current_text': current_text
+    })
+    
+    return questions, context

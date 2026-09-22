@@ -119,6 +119,8 @@ def extract_from_paper(question_paper):
 
             status.total_pages = total_pages
             status.save(update_fields=["total_pages"])
+            
+            context = None
 
             for page_num in range(total_pages):
                 page = doc.load_page(page_num)
@@ -146,9 +148,11 @@ def extract_from_paper(question_paper):
                 if page_text:
                     total_chars += len(page_text)
 
-                    questions_data = parse_questions_from_text(
+                    questions_data, context = parse_questions_from_text(
                         page_text,
                         page_number=page_num + 1,
+                        context=context,
+                        is_last_page=(page_num == total_pages - 1)
                     )
 
                     for q_data in questions_data:
@@ -157,8 +161,10 @@ def extract_from_paper(question_paper):
                             page_number=q_data["page_number"],
                             question_number=q_data["question_number"],
                             part=q_data["part"],
+                            section=q_data.get("section"),
                             question_text=q_data["question_text"],
                             raw_text_block=q_data["raw_text_block"],
+                            marks=q_data.get("marks")
                         )
 
                         total_questions += 1

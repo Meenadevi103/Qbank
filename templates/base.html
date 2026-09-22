@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html class="light" lang="en">
 <head>
@@ -5,11 +6,11 @@
 <meta content="width=device-width, initial-scale=1.0" name="viewport">
 <title>{% block title %}Question Paper Management System{% endblock %}</title>
 <!-- Tailwind CSS -->
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script src="{% static 'js/tailwind.min.js' %}"></script>
 <!-- Google Fonts -->
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="{% static 'css/inter.css' %}" rel="stylesheet">
 <!-- Material Symbols -->
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+<link href="{% static 'css/material-symbols.css' %}" rel="stylesheet">
 <script id="tailwind-config">
 tailwind.config = {darkMode: "class", theme: {extend: {colors: {"on-primary-container": "#67d377", "inverse-primary": "#71dd7f", "on-primary-fixed": "#002107", "surface-tint": "#006e29", "inverse-on-surface": "#eef1f6", "inverse-surface": "#2d3135", "surface-variant": "#e0e3e8", primary: "#003f14", "on-secondary-container": "#59685e", "surface-bright": "#f7f9ff", "on-secondary-fixed-variant": "#3c4a41", "surface-container": "#ebeef3", "on-tertiary": "#ffffff", "tertiary-fixed": "#e1e3e4", "secondary-fixed-dim": "#bacabe", "on-tertiary-fixed": "#191c1d", error: "#ba1a1a", "on-surface-variant": "#424750", tertiary: "#343637", "surface-container-highest": "#e0e3e8", "secondary-container": "#d6e7da", "on-secondary": "#ffffff", "outline-variant": "#c2c7d1", "on-primary-fixed-variant": "#00531d", "surface-container-low": "#f1f4f9", "on-error-container": "#93000a", "on-error": "#ffffff", "secondary-fixed": "#d6e7da", "surface-container-high": "#e5e8ee", "on-tertiary-container": "#bcbebf", "tertiary-container": "#4a4d4e", "on-secondary-fixed": "#111e17", "primary-fixed": "#8dfa99", "primary-fixed-dim": "#71dd7f", "surface-container-lowest": "#ffffff", surface: "#f7f9ff", "on-primary": "#ffffff", "tertiary-fixed-dim": "#c5c7c8", "primary-container": "#005920", "surface-dim": "#d7dadf", "on-background": "#181c20", outline: "#727781", secondary: "#536258", background: "#f7f9ff", "on-tertiary-fixed-variant": "#454748", "on-surface": "#181c20", "error-container": "#ffdad6"}, borderRadius: {DEFAULT: "0.125rem", lg: "0.25rem", xl: "0.5rem", full: "0.75rem"}, spacing: {gutter: "24px", "section-gap": "64px", base: "8px", "margin-mobile": "16px", "container-max": "1280px"}, fontFamily: {"headline-xl": ["Inter"], "body-md": ["Inter"], "display-lg": ["Inter"], "headline-lg": ["Inter"], "headline-md": ["Inter"], "body-lg": ["Inter"], "headline-xl-mobile": ["Inter"], "label-md": ["Inter"], headline: ["Inter"], display: ["Inter"], body: ["Inter"], label: ["Inter"]}, fontSize: {"headline-xl": ["32px", {lineHeight: "40px", letterSpacing: "-0.01em", fontWeight: "700"}], "body-md": ["16px", {lineHeight: "24px", fontWeight: "400"}], "display-lg": ["48px", {lineHeight: "56px", letterSpacing: "-0.02em", fontWeight: "700"}], "headline-lg": ["24px", {lineHeight: "32px", fontWeight: "600"}], "headline-md": ["20px", {lineHeight: "28px", fontWeight: "600"}], "body-lg": ["18px", {lineHeight: "28px", fontWeight: "400"}], "headline-xl-mobile": ["28px", {lineHeight: "36px", fontWeight: "700"}], "label-md": ["14px", {lineHeight: "20px", letterSpacing: "0.05em", fontWeight: "500"}]}}}};
 </script>

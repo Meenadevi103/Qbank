@@ -36,8 +36,10 @@ class ExtractedQuestion(models.Model):
     page_number = models.IntegerField(help_text="Page number where this question starts (1-indexed)")
     question_number = models.CharField(max_length=20, help_text="e.g., '1', '13', 'Part A'")
     part = models.CharField(max_length=10, blank=True, null=True, help_text="e.g., 'a', 'b', 'i'")
+    section = models.CharField(max_length=50, blank=True, null=True, help_text="Section of the paper (e.g., 'A', 'B')")
     question_text = models.TextField()
     raw_text_block = models.TextField(help_text="The exact raw text chunk containing this question")
+    marks = models.CharField(max_length=50, blank=True, null=True, help_text="Extracted marks (e.g., '10', '5x2=10')")
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

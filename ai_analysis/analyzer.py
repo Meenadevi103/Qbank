@@ -77,46 +77,28 @@ def clean_instructional_phrases(text):
 
 def extract_topic_name(questions_texts):
     """
-    Uses a KeyBERT-like approach to find the most representative phrase.
+    Finds a concise, meaningful label by selecting the shortest cleaned question text.
     """
-    from sklearn.feature_extraction.text import CountVectorizer
+    cleaned_texts = [clean_instructional_phrases(q).strip() for q in questions_texts]
+    # Filter out empty or 1-word texts if possible
+    valid_texts = [q for q in cleaned_texts if len(q.split()) >= 1]
     
-    combined_text = " ".join(questions_texts)
-    cleaned_text = clean_instructional_phrases(combined_text)
-    
-    if len(cleaned_text.split()) < 2:
-        cleaned_text = combined_text
+    if not valid_texts:
+        valid_texts = questions_texts
         
-    try:
-        vectorizer = CountVectorizer(ngram_range=(1, 3), stop_words='english')
-        vectorizer.fit([cleaned_text])
-        candidates = vectorizer.get_feature_names_out()
-    except ValueError:
-        return "General Concept"
+    valid_texts.sort(key=len)
+    best_candidate = valid_texts[0]
+    
+    # Capitalize first letter properly
+    if len(best_candidate) > 0:
+        best_candidate = best_candidate[0].upper() + best_candidate[1:]
         
-    if len(candidates) == 0:
-        return "General Concept"
+    # Cap length to ~6 words
+    words = best_candidate.split()
+    if len(words) > 6:
+        best_candidate = " ".join(words[:6]) + "..."
         
-    model = get_embedding_model()
-    doc_embedding = model.encode([cleaned_text])
-    candidate_embeddings = model.encode(candidates)
-    
-    distances = cosine_similarity(doc_embedding, candidate_embeddings)[0]
-    
-    # Penalize longer phrases significantly to prefer concise concepts
-    best_score = -1
-    best_topic = candidates[0]
-    
-    for i, candidate in enumerate(candidates):
-        num_words = len(candidate.split())
-        # Heavy penalty: 0.1 for bigrams, 0.2 for trigrams
-        penalty = (num_words - 1) * 0.1
-        score = distances[i] - penalty
-        if score > best_score:
-            best_score = score
-            best_topic = candidate
-            
-    return best_topic.title().strip()
+    return best_candidate
 
 def perform_semantic_analysis(subject_id):
     """
@@ -193,7 +175,7 @@ def perform_semantic_analysis(subject_id):
             n_clusters=None, 
             metric='precomputed', 
             linkage='average',
-            distance_threshold=0.25
+            distance_threshold=0.15
         )
         labels = clustering.fit_predict(distance_matrix)
         
@@ -217,16 +199,23 @@ def perform_semantic_analysis(subject_id):
         # Extract Topic Name
         topic_name = extract_topic_name(group_texts)
         
-        # Format related questions
+        # Format related questions as dicts
         related_questions = []
         for q in group_qs:
-            q_str = f"{clean_question_text(q.question_text)}"
-            if q.question_number:
-                prefix = f"Q{q.question_number}"
-                if q.part:
-                    prefix += f" ({q.part})"
-                q_str = f"[{q.question_paper.academic_year} - {prefix}] {q_str}"
-            related_questions.append(q_str)
+            q_idx = questions.index(q)
+            q_dict = {
+                'id': q.id,
+                'text': clean_question_text(q.question_text),
+                'academic_year': q.question_paper.academic_year,
+                'exam_type': q.question_paper.exam_type,
+                'question_number': q.question_number,
+                'part': q.part,
+                'section': q.section,
+                'marks': q.marks if q.marks else "Marks not available",
+                'embedding_idx': q_idx,
+                'question_paper_id': q.question_paper_id
+            }
+            related_questions.append(q_dict)
             
         if topic_name in merged_groups:
             merged_groups[topic_name]['frequency'] += frequency
@@ -244,13 +233,37 @@ def perform_semantic_analysis(subject_id):
     for topic_name, group_data in merged_groups.items():
         group_data['years'] = sorted(list(set(group_data['years'])), reverse=True)
         
-        # Priority
-        if group_data['frequency'] >= 3:
-            group_data['priority'] = "High Priority"
-        elif group_data['frequency'] == 2:
-            group_data['priority'] = "Important"
+        # Calculate repetition type for each question in the merged group
+        group_qs = group_data['related_questions']
+        
+        if len(group_qs) == 1:
+            group_qs[0]['repetition_type'] = "Unique"
         else:
-            group_data['priority'] = "Optional"
+            for i, q1 in enumerate(group_qs):
+                max_sim = 0
+                idx1 = q1['embedding_idx']
+                for j, q2 in enumerate(group_qs):
+                    if i != j:
+                        idx2 = q2['embedding_idx']
+                        sim = sim_matrix[idx1][idx2]
+                        if sim > max_sim:
+                            max_sim = sim
+                            
+                if max_sim > 0.95:
+                    q1['repetition_type'] = "Exact Repeat"
+                elif max_sim > 0.85:
+                    q1['repetition_type'] = "Near Repeat"
+                else:
+                    q1['repetition_type'] = "Same Concept"
+                    
+        # Remove embedding_idx before sending to UI
+        for q in group_qs:
+            q.pop('embedding_idx', None)
+        
+        # Calculate distinct papers
+        paper_ids = set(q['question_paper_id'] for q in group_qs)
+        group_data['distinct_papers'] = len(paper_ids)
+        group_data['distinct_years'] = len(group_data['years'])
             
         result_groups.append(group_data)
         

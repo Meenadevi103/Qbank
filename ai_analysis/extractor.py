@@ -156,6 +156,15 @@ def extract_from_paper(question_paper):
                     )
 
                     for q_data in questions_data:
+                        # Prevent duplicate question rows for the same paper
+                        q_text = q_data["question_text"].strip().lower()
+                        already_exists = ExtractedQuestion.objects.filter(
+                            question_paper=question_paper,
+                            question_text__iexact=q_data["question_text"].strip()
+                        ).exists()
+                        if already_exists:
+                            continue
+
                         ExtractedQuestion.objects.create(
                             question_paper=question_paper,
                             page_number=q_data["page_number"],

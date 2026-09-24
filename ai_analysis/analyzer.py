@@ -129,13 +129,18 @@ def perform_semantic_analysis(subject_id):
     # Clean the texts for embedding, filtering out questions that are just generic instructions
     valid_questions = []
     texts = []
+    seen_questions = set()
     for q in questions:
         cleaned_text = clean_question_text(q.question_text)
         # Check if the question has actual technical content beyond generic instructions
         stripped_concept = clean_instructional_phrases(cleaned_text).strip()
         if len(stripped_concept) >= 3:
-            valid_questions.append(q)
-            texts.append(cleaned_text)
+            # Deduplicate: skip if same text already seen for the same paper
+            dedup_key = (q.question_paper_id, cleaned_text.strip().lower())
+            if dedup_key not in seen_questions:
+                seen_questions.add(dedup_key)
+                valid_questions.append(q)
+                texts.append(cleaned_text)
             
     questions = valid_questions
 

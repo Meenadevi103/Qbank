@@ -278,7 +278,20 @@ def paper_create(request):
         if form.is_valid():
             paper = form.save()
             ExtractionStatus.objects.get_or_create(question_paper=paper, defaults={'status': 'PENDING'})
-            messages.success(request, "Question Paper uploaded successfully.")
+            
+            try:
+                from ai_analysis.extractor import extract_from_paper
+                from ai_analysis.analyzer import perform_semantic_analysis
+                extract_from_paper(paper)
+                perform_semantic_analysis(paper.subject.id)
+                messages.success(request, "Question Paper uploaded and successfully analyzed!")
+            except Exception as e:
+                status = ExtractionStatus.objects.get(question_paper=paper)
+                status.status = 'FAILED'
+                status.error_message = str(e)
+                status.save()
+                messages.warning(request, f"Paper uploaded, but analysis failed: {e}")
+                
             return redirect('dashboard:papers')
     else:
         form = QuestionPaperForm()
